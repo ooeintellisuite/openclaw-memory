@@ -27,7 +27,7 @@ Five layers of protection that work **with** (not against) native compaction:
 
 Just tell your OpenClaw agent:
 
-> Read https://raw.githubusercontent.com/gavdalf/openclaw-memory/main/INSTALL-AGENT.md and follow the instructions to install OpenClaw Memory.
+> Read https://raw.githubusercontent.com/ooeintellisuite/openclaw-memory/main/INSTALL-AGENT.md and follow the instructions to install OpenClaw Memory.
 
 Your agent will read the guide, install the scripts, configure the cron jobs, and set up the pre-compaction hooks — all by itself. You just approve the steps.
 
@@ -35,7 +35,7 @@ Your agent will read the guide, install the scripts, configure the cron jobs, an
 
 ```bash
 # 1. Clone this repo
-git clone https://github.com/gavdalf/openclaw-memory.git
+git clone https://github.com/ooeintellisuite/openclaw-memory.git
 cd openclaw-memory
 
 # 2. Run the installer
@@ -64,6 +64,18 @@ See [docs/architecture.md](docs/architecture.md) for the full breakdown.
 - bash, jq, curl
 - An LLM API key (OpenRouter recommended — Gemini 2.5 Flash is ~$0.001/run)
 - `inotify-tools` (Linux) or `fswatch` (macOS) for the reactive watcher
+
+## Security/Hardening Defaults (fork)
+
+- Installer does **not** auto-run package manager installs with sudo.
+- API key prompt is hidden during interactive install.
+- `.env` file permissions are tightened (`chmod 600`) after setup.
+- Observer masks common secret/token patterns before sending transcript snippets to the LLM.
+- Optional dry-run mode for observer testing without external API calls:
+
+```bash
+OBSERVER_DRY_RUN=true bash ~/clawd/scripts/observer.sh
+```
 
 ## Best Practice: Real-Time Task Logging (Layer 6)
 

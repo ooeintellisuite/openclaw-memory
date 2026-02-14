@@ -25,7 +25,7 @@ Your owner wants you to install **OpenClaw Memory** — a five-layer memory prot
 ### Step 1: Clone the repo
 
 ```bash
-git clone https://github.com/gavdalf/openclaw-memory.git /tmp/openclaw-memory
+git clone https://github.com/ooeintellisuite/openclaw-memory.git /tmp/openclaw-memory
 cd /tmp/openclaw-memory
 ```
 

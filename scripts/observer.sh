@@ -49,6 +49,15 @@ mkdir -p "$LOG_DIR" "$(dirname "$OBSERVATIONS_FILE")" "$(dirname "$MARKER_FILE")
 LOG="${LOG_DIR}/observer.log"
 log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG"; }
 
+sanitize_line() {
+  local line="$1"
+  # Mask common secret/token/API key patterns before sending to LLM
+  line=$(echo "$line" | sed -E 's/(api[_-]?key|token|secret|password|passwd)[[:space:]]*[:=][[:space:]]*[^[:space:]]+/\1=[REDACTED]/Ig')
+  line=$(echo "$line" | sed -E 's/(Authorization:[[:space:]]*Bearer[[:space:]]+)[A-Za-z0-9._~-]+/\1[REDACTED]/Ig')
+  line=$(echo "$line" | sed -E 's/\b(gh[pousr]_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{20,})\b/[REDACTED]/g')
+  echo "$line"
+}
+
 # --- Lock ---
 if [ -f "$LOCK_FILE" ]; then
   LOCK_AGE=$(( $(date +%s) - $(stat -c %Y "$LOCK_FILE" 2>/dev/null || stat -f %m "$LOCK_FILE" 2>/dev/null || echo 0) ))
@@ -84,7 +93,10 @@ echo "$TRANSCRIPTS" | while IFS= read -r f; do
   [ -z "$f" ] && continue
   jq -r 'select(.message.role == "user" or .message.role == "assistant") |
     "\(.timestamp // .ts) [\(.message.role)]: \(.message.content | if type == "array" then map(select(.type == "text") | .text) | join(" ") elif type == "string" then . else "" end)"' "$f" 2>/dev/null
-done | tail -150 >> "$TMPMSGS"
+done | tail -150 | while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  sanitize_line "$line"
+done >> "$TMPMSGS"
 
 LINES=$(wc -l < "$TMPMSGS")
 if [ "$LINES" -lt 3 ]; then
@@ -127,7 +139,13 @@ PAYLOAD=$(jq -n --arg sys "$SYSTEM_PROMPT" --arg content "$CONTENT" '{
   max_tokens: 2000
 }')
 
-RESPONSE=$(curl -s -X POST "$API_URL" \
+if [[ "${OBSERVER_DRY_RUN:-false}" == "true" ]]; then
+  log "DRY RUN: skipping LLM call"
+  echo "DRY_RUN_OK"
+  exit 0
+fi
+
+RESPONSE=$(curl -sS --max-time 90 -X POST "$API_URL" \
   -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
   -H "Content-Type: application/json" \
   -d "$PAYLOAD" 2>/dev/null)
