@@ -65,6 +65,13 @@ See [docs/architecture.md](docs/architecture.md) for the full breakdown.
 - An LLM API key (OpenRouter recommended — Gemini 2.5 Flash is ~$0.001/run)
 - `inotify-tools` (Linux) or `fswatch` (macOS) for the reactive watcher
 
+## Environment config (current approach)
+
+This fork currently uses workspace `.env` for runtime configuration (`OPENROUTER_API_KEY`, paths, model).
+
+- Example template: [`.env.example`](.env.example)
+- Installer updates this block idempotently and tightens permissions to `600`.
+
 ## Security/Hardening Defaults (fork)
 
 - Installer does **not** auto-run package manager installs with sudo.

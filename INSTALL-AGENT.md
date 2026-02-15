@@ -57,7 +57,7 @@ cp prompts/reflector-system.txt "$WORKSPACE_DIR/prompts/"
 
 ### Step 4: Configure your API key
 
-Add your OpenRouter API key to your workspace `.env` file:
+Add your OpenRouter API key to your workspace `.env` file (current approach for this fork):
 
 ```bash
 echo 'OPENROUTER_API_KEY=your-key-here' >> "$WORKSPACE_DIR/.env"

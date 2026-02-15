@@ -37,8 +37,19 @@ cp "$SCRIPT_DIR/scripts/"*.sh "$WORKSPACE_DIR/scripts/"
 cp "$SCRIPT_DIR/prompts/"*.txt "$WORKSPACE_DIR/prompts/"
 chmod +x "$WORKSPACE_DIR/scripts/"*.sh
 
-# Write env config
-cat >> "$WORKSPACE_DIR/.env" << EOF
+# Write env config (replace existing OpenClaw Memory block if present)
+ENV_FILE="$WORKSPACE_DIR/.env"
+if [ -f "$ENV_FILE" ] && grep -q "# OpenClaw Memory System" "$ENV_FILE"; then
+  awk '
+    BEGIN { skip=0 }
+    /^# OpenClaw Memory System$/ { skip=1; next }
+    skip==1 && /^export (OPENCLAW_DIR|WORKSPACE_DIR|OPENROUTER_API_KEY|OBSERVER_MODEL)=/ { next }
+    skip==1 { skip=0 }
+    { print }
+  ' "$ENV_FILE" > "$ENV_FILE.tmp" && mv "$ENV_FILE.tmp" "$ENV_FILE"
+fi
+
+cat >> "$ENV_FILE" << EOF
 
 # OpenClaw Memory System
 export OPENCLAW_DIR="$OPENCLAW_DIR"
@@ -46,7 +57,7 @@ export WORKSPACE_DIR="$WORKSPACE_DIR"
 export OPENROUTER_API_KEY="$API_KEY"
 export OBSERVER_MODEL="$MODEL"
 EOF
-chmod 600 "$WORKSPACE_DIR/.env" 2>/dev/null || true
+chmod 600 "$ENV_FILE" 2>/dev/null || true
 
 # Create initial observations file
 if [ ! -f "$WORKSPACE_DIR/memory/observations.md" ]; then
